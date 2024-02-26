@@ -1,53 +1,3 @@
-/*
-  Josh's Custom CSS Reset
-  https://www.joshwcomeau.com/css/custom-css-reset/
-*/
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-* {
-  margin: 0;
-}
-html,
-body {
-  height: 100%;
-}
-body {
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif,
-    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-}
-img,
-picture,
-video,
-canvas,
-svg {
-  display: block;
-  max-width: 100%;
-}
-input,
-button,
-textarea,
-select {
-  font: inherit;
-}
-p,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  overflow-wrap: break-word;
-}
-#root,
-#__next {
-  isolation: isolate;
-}
-
 nav {
   background-color: black;
   color: white;
@@ -102,18 +52,51 @@ nav {
   }
 }
 
-#dialog-note-form {
-  margin: 0 auto;
+*:focus {
+  outline: none;
+}
+
+#dialog-new-note-form {
+  /* margin: 0 auto; */
+  min-height: 15rem;
   width: 40rem;
   padding: 1rem;
   outline: 1px solid red;
   border: 0;
   border-radius: 5px;
   background-color: white;
-  z-index: 999;
+  position: relative;
+  /* z-index: 999; */
 }
 
 dialog::backdrop {
   background-color: rgba(0, 0, 0, 0.391);
   backdrop-filter: blur(2px);
+}
+
+#editor-new-note {
+  border-bottom: 0;
+  display: flex;
+}
+
+#btn-save-note {
+  position: absolute;
+  width: fit-content;
+  bottom: 1rem;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+}
+
+.new-note-form-separator {
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  padding: 10px 12px;
+}
+
+.new-note-form-separator > hr {
+  height: 1px;
+  border: none;
+  color: #ccc;
+  background-color: #ccc;
 }

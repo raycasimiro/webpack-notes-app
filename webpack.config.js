@@ -1,6 +1,11 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
 module.exports = {
+  output: {
+    clean: true,
+    filename: 'bundle.js',
+    path: path.resolve(__dirname, 'dist'),
+  },
   plugins: [
     new HtmlWebpackPlugin({
       hash: true,
@@ -10,7 +15,6 @@ module.exports = {
     }),
   ],
   mode: 'development',
-  output: { clean: true },
   devServer: {
     static: './dist',
     open: true,
