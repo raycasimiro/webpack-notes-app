@@ -3,22 +3,48 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
+      rel="stylesheet"
+    />
     <title>Document</title>
   </head>
   <body>
-    <nav><h2>Notes</h2></nav>
+    <nav>
+      <h2>Notes</h2>
+      <button type="button" id="btn-sign-in">Create Account / Sign In</button>
+      <button type="button" id="btn-sign-out">Log out</button>
+      <div id="login-status-msg">No account signed in</div>
+    </nav>
+    <section class="menu-container">
+      <button type="button" id="btn-open-newnote-modal">Add Note</button>
+    </section>
     <main class="notes-container">
       <div class="grid-sizer"></div>
     </main>
-    <div id="dialog-new-note-form" open>
-      <input type="text" id="new-note-title" placeholder="Untitled" />
-      <div class="new-note-form-separator">
-        <hr />
+    <dialog id="dialog-newnote-form">
+      <div class="form-container">
+        <input type="text" id="new-note-title" placeholder="Title" />
+        <div class="new-note-form-separator">
+          <hr />
+        </div>
+        <section class="ql-container">
+          <div id="editor-new-note"></div>
+        </section>
+        <div id="dialog-button-options">
+          <!-- <button type="button" id="btn-save-note">Save</button> -->
+        </div>
       </div>
-      <section class="ql-container">
-        <div id="editor-new-note"></div>
-      </section>
-      <button type="button" id="btn-save-note">Save</button>
-    </div>
+    </dialog>
+    <script
+      type="module"
+      src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"
+    ></script>
+    <script
+      nomodule
+      src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"
+    ></script>
   </body>
 </html>

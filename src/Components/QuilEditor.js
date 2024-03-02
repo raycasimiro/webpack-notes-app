@@ -1,4 +1,5 @@
 import Quill from 'quill/core';
+import PlainClipboard from './PlainClipboard';
 import Toolbar from 'quill/modules/toolbar';
 import Snow from 'quill/themes/snow';
 import Bold from 'quill/formats/bold';
@@ -9,84 +10,34 @@ import Underline from 'quill/formats/underline';
 import Blockquote from 'quill/formats/blockquote';
 import Code from 'quill/formats/code';
 import List from 'quill/formats/list';
-import Link from 'quill/formats/link';
+import CustomLink from './CustomLink';
 import { ColorStyle } from 'quill/formats/color';
 import 'quill/dist/quill.snow.css';
 import './QuilEditor.css';
 
-import Clipboard from 'quill/modules/clipboard';
-import { Delta } from 'quill/core';
-
-Link.PROTOCOL_WHITELIST = [
-  'http',
-  'https',
-  'mailto',
-  'tel',
-  'radar',
-  'rdar',
-  'smb',
-  'sms',
-];
-
-class PlainClipboard extends Clipboard {
-  onPaste(range, { text }) {
-    const delta = new Delta()
-      .retain(range.index)
-      .delete(range.length)
-      .insert(text);
-    this.quill.updateContents(delta, Quill.sources.USER);
-    this.quill.setSelection(
-      delta.length() - range.length,
-      Quill.sources.SILENT
-    );
-    this.quill.scrollSelectionIntoView();
-  }
-}
-
-class CustomLink extends Link {
-  static sanitize(url) {
-    // Run default sanitize method from Quill
-    const sanitizedUrl = super.sanitize(url);
-
-    // Not whitelisted URL based on protocol so, let's return `blank`
-    if (!sanitizedUrl || sanitizedUrl === 'about:blank') return sanitizedUrl;
-
-    // Verify if the URL already have a whitelisted protocol
-    const hasWhitelistedProtocol = this.PROTOCOL_WHITELIST.some(function (
-      protocol
-    ) {
-      return sanitizedUrl.startsWith(protocol);
-    });
-
-    if (hasWhitelistedProtocol) return sanitizedUrl;
-
-    // if not, then append only 'http' to not to be a relative URL
-    return `http://${sanitizedUrl}`;
-  }
-}
-
 Quill.register({
-  'modules/clipboard': PlainClipboard,
-  'formats/link': Strike,
   'modules/toolbar': Toolbar,
   'themes/snow': Snow,
   'formats/bold': Bold,
   'formats/italic': Italic,
-  'formats/header': Header,
   'formats/underline': Underline,
+  'formats/strike': Strike,
+  'formats/header': Header,
   'formats/blockquote': Blockquote,
   'formats/code': Code,
   'formats/list': List,
   'formats/color': ColorStyle,
-  'formats/link': Link,
   'formats/link': CustomLink,
 });
+
+Quill.register('modules/clipboard', PlainClipboard, true);
 
 export default function QuilEditor(id) {
   const toolbarOptions = {
     container: [
       ['bold', 'italic', 'underline', 'strike'],
       [{ color: [] }],
+      [{ list: 'ordered' }, { list: 'bullet' }],
       ['blockquote', 'code-block', 'link'],
       [{ header: 1 }, { header: 2 }],
       ['clean'],
@@ -102,8 +53,16 @@ export default function QuilEditor(id) {
   const quill = new Quill(editor, options);
 
   const getEditorContents = () => quill.getContents();
+  const setEditorContents = (Delta) => quill.setContents(Delta);
   const clearEditor = () => quill.setContents([]);
+  const getFocus = () => quill.focus();
   const getEditorContentsHTML = () => quill.getSemanticHTML();
 
-  return { getEditorContents, clearEditor, getEditorContentsHTML };
+  return {
+    getEditorContents,
+    setEditorContents,
+    clearEditor,
+    getFocus,
+    getEditorContentsHTML,
+  };
 }

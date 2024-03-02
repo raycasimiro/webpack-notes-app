@@ -23,6 +23,10 @@
   }
 }
 
+#new-note-title {
+  color: var(--primary-text-color);
+}
+
 .note-content {
   outline: 1px solid red;
   padding: 1rem;
@@ -37,21 +41,42 @@
   margin: 1rem 0;
 }
 
-.note-text > h1 {
+/*///////////////////////// TEXT FORMATTING /////////////////////////*/
+
+.note-text h1 {
   font-size: 26px;
   line-height: 37px;
   font-weight: 400;
-  color: #333333;
+  color: var(--primary-text-color);
 }
 
-.note-text > h2 {
+.note-text h2 {
   font-size: 20px;
   line-height: 28px;
   font-weight: 400;
-  color: #333333;
+  color: var(--primary-text-color);
 }
 
-.note-text > blockquote {
+.note-text p,
+li {
+  color: var(--primary-text-color);
+}
+
+.note-text ul > li::before {
+  content: '\2022';
+  display: inline-block;
+  margin-left: -1.5em;
+  margin-right: 0.3em;
+  text-align: right;
+  white-space: nowrap;
+  width: 1.2em;
+}
+
+.note-text ul {
+  list-style-type: none;
+}
+
+.note-text blockquote {
   border-left: 3px solid #ccc;
   font-style: italic;
   margin-top: 10px;
@@ -59,7 +84,8 @@
   padding-left: 16px;
 }
 
-.note-text > pre {
+.note-text > pre,
+.note-text > .ql-code-block {
   font-size: 1rem;
   border-radius: 3px;
   font-family: monospace;
@@ -77,4 +103,5 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  color: var(--primary-text-color);
 }

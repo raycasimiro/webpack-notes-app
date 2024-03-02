@@ -1,12 +1,19 @@
+.ql-container {
+  font-family: 'Inter', Helvetica, Arial, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol';
+  display: flex;
+  flex-direction: column-reverse;
+}
+
 .ql-editor {
   min-height: 300px;
+  max-height: 55vh;
   border-radius: 5px;
-  padding: 0 12px 15px 12px;
+  padding: 15px 12px;
 }
 
 .ql-toolbar {
   border-radius: 0 0 5px 5px;
-  margin-bottom: 3rem;
   border: 0;
 }
 
@@ -22,33 +29,40 @@
   border-bottom: 6px solid #000;
 }
 
-.ql-container {
-  display: flex;
-  flex-direction: column-reverse;
-}
-
 .ql-snow .ql-picker.ql-expanded .ql-picker-options {
   top: unset;
   bottom: 100%;
 }
 
+/*///////////////////////// TEXT FORMATTING /////////////////////////*/
+
 .ql-snow .ql-editor h1 {
+  font-size: 26px;
+  line-height: 37px;
   font-weight: 400;
-  color: #333;
-  font-size: 2rem;
+  color: var(--primary-text-color);
 }
 
 .ql-snow .ql-editor h2 {
+  font-size: 20px;
+  line-height: 28px;
   font-weight: 400;
-  color: #333;
-  font-size: 1.5rem;
+  color: var(--primary-text-color);
 }
 
 .ql-snow .ql-editor p,
 li,
-blockquote,
+blockquote {
+  font-size: 1rem;
+  color: var(--primary-text-color);
+}
+
 .ql-code-block {
   font-size: 1rem;
+}
+
+.ql-editor ol {
+  padding-left: 1rem;
 }
 
 .ql-snow .ql-editor blockquote {
@@ -58,11 +72,12 @@ blockquote,
   margin-bottom: 10px;
   padding-left: 16px;
 }
+
 #new-note-title {
   width: 100%;
   border: 1px solid #ccc;
   border-bottom: 0;
-  padding: 12px 15px 0px 12px;
+  padding: 15px 12px;
   font-size: 26px;
   line-height: 37px;
   border-radius: 5px 5px 0 0;
