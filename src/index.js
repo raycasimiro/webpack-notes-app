@@ -1,18 +1,12 @@
 import Masonry from 'masonry-layout';
 import { Note, Notes } from './Components/Notes';
 import QuilEditor from './Components/QuilEditor';
-
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signOut,
-  onAuthStateChanged,
-} from 'firebase/auth';
-
+import { format, formatDistance } from 'date-fns';
 import './reset.css';
 import './index.css';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
+const auth = getAuth();
 //initialise Masonry.js
 const grid = document.querySelector('.notes-container');
 const msnry = new Masonry(grid, {
@@ -20,6 +14,14 @@ const msnry = new Masonry(grid, {
   itemSelector: '.note-card',
   columnWidth: '.grid-sizer',
   horizontalOrder: true,
+  hiddenStyle: {
+    transform: 'translateY(100px)',
+    opacity: 0,
+  },
+  visibleStyle: {
+    transform: 'translateY(0px)',
+    opacity: 1,
+  },
 });
 
 //initialize Quill editor
@@ -28,48 +30,33 @@ const editorNewNote = QuilEditor('editor-new-note');
 //initialize Notes
 const newNote = Notes();
 
-//sample Notes
-// newNote.addNote(
-//   Note('Testing1', { ops: [{ insert: 'lorem ipsum\n' }] }, '<p>lorem ipsum</p>')
-// );
-// newNote.addNote(
-//   Note('Testing2', { ops: [{ insert: 'dolor sit amet\n' }] }, 'dolor sit amet')
-// );
-// newNote.addNote(
-//   Note('Testing3', { ops: [{ insert: 'dolor sit amet\n' }] }, 'dolor sit amet')
-// );
-
-const updateNote = (id) => {
-  let note = newNote.findNote(id);
-  note.title = getTitleInput();
-  note.text = editorNewNote.getEditorContents();
-  note.html = editorNewNote
-    .getEditorContentsHTML()
-    .replaceAll('<p></p>', '<br/>');
-  console.log(newNote.getAllNotes());
-  dialogNewNote.close();
-};
-
-const updateCard = (elem) => {
+const resetMasonry = () => {
   msnry.remove(grid.children);
   populateMasonryContainer();
 };
 
 //create Card element
-const createCard = (title, text, html, date, getID) => {
+const createCard = (title, text, html, created_at, id) => {
   const noteCard = document.createElement('div');
   noteCard.classList.add('note-card');
+  // noteCard.setAttribute('data-id', id);
   noteCard.addEventListener('click', (e) => {
+    // console.log(noteCard.getAttribute('data-id'));
     const cardElem = e.target;
-    console.log(getID);
     dialogNewNote.showModal();
     let btnSave = document.createElement('button');
     btnSave.innerText = 'Save';
     btnSave.classList.add('dialog-btn');
     btnSave.addEventListener('click', (e) => {
       e.stopPropagation();
-      updateNote(getID);
-      updateCard(cardElem);
+      newNote.updateNote(
+        getTitleInput(),
+        editorNewNote.getEditorContents(),
+        editorNewNote.getEditorContentsHTML().replaceAll('<p></p>', '<br/>'),
+        id
+      );
+      dialogNewNote.close();
+      resetMasonry();
     });
     dialogButtonOptions.appendChild(btnSave);
     document.getElementById('new-note-title').value = title;
@@ -82,7 +69,7 @@ const createCard = (title, text, html, date, getID) => {
   btnDeleteCard.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
-    newNote.removeNote(getID);
+    newNote.removeNote(id);
     let elem = e.target.parentNode.parentNode;
     msnry.remove(elem);
     msnry.layout();
@@ -95,8 +82,14 @@ const createCard = (title, text, html, date, getID) => {
   noteTitle.classList.add('note-title');
   noteTitle.innerText = title;
 
+  const result = formatDistance(
+    created_at,
+    format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSS"),
+    { addSuffix: true }
+  );
+
   const noteDate = document.createElement('small');
-  noteDate.innerText = date;
+  noteDate.innerText = result;
 
   const noteText = document.createElement('div');
   noteText.classList.add('note-text');
@@ -111,14 +104,15 @@ const createCard = (title, text, html, date, getID) => {
   return noteCard;
 };
 
-const populateMasonryContainer = () => {
-  for (let note of newNote.getAllNotes()) {
+const populateMasonryContainer = async () => {
+  let notes = await newNote.getAllNotes();
+  for (let note of notes) {
     let elem = createCard(
       note.title,
       note.text,
       note.html,
-      note.getDate(),
-      note.getID()
+      note.created_at,
+      note.id
     );
     grid.appendChild(elem);
     msnry.appended(elem);
@@ -126,15 +120,20 @@ const populateMasonryContainer = () => {
   }
 };
 
-populateMasonryContainer();
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    populateMasonryContainer();
+  } else {
+    msnry.remove(grid.children);
+  }
+});
 
-// const btnSaveNote = document.getElementById('btn-save-note');
 const btnOpenNewNoteModal = document.getElementById('btn-open-newnote-modal');
 const dialogButtonOptions = document.getElementById('dialog-button-options');
 const dialogNewNote = document.getElementById('dialog-newnote-form');
 const inputTitle = document.getElementById('new-note-title');
 
-const saveNewNote = () => {
+const saveNewNote = async () => {
   newNote.addNote(
     Note(
       getTitleInput(),
@@ -143,12 +142,14 @@ const saveNewNote = () => {
     )
   );
 
+  let note = await newNote.getNewestNote();
+
   let newNoteCard = createCard(
-    newNote.getLatestNote().title,
-    newNote.getLatestNote().text,
-    newNote.getLatestNote().html,
-    newNote.getLatestNote().getDate(),
-    newNote.getLatestNote().getID()
+    note.title,
+    note.text,
+    note.html,
+    note.created_at,
+    note.id
   );
 
   grid.appendChild(newNoteCard);
@@ -174,7 +175,7 @@ dialogNewNote.addEventListener('close', (e) => {
   dialogButtonOptions.innerHTML = '';
 });
 
-dialogNewNote.addEventListener('click', (event) => {
+dialogNewNote.addEventListener('mousedown', (event) => {
   if (event.target.tagName === 'DIALOG') {
     dialogNewNote.close();
   }
@@ -188,62 +189,3 @@ const getTitleInput = () => {
 const clearTitleInput = () => {
   inputTitle.value = '';
 };
-
-//Firebase auth
-const auth = getAuth();
-const provider = new GoogleAuthProvider();
-
-const btnSignIn = document.getElementById('btn-sign-in');
-const btnSignOut = document.getElementById('btn-sign-out');
-
-const loginStatusMsg = document.getElementById('login-status-msg');
-
-btnSignOut.style.display = 'none';
-loginStatusMsg.style.display = 'none';
-
-const userSignIn = async () => {
-  signInWithPopup(auth, provider)
-    .then((result) => {
-      // This gives you a Google Access Token. You can use it to access the Google API.
-      // --- const credential = GoogleAuthProvider.credentialFromResult(result);
-      // --- const token = credential.accessToken;
-      // The signed-in user info.
-      const user = result.user;
-      console.log(user);
-      // IdP data available using getAdditionalUserInfo(result)
-      // ...
-    })
-    .catch((error) => {
-      // Handle Errors here.
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      // The email of the user's account used.
-      // --- const email = error.customData.email;
-      // The AuthCredential type that was used.
-      // --- const credential = GoogleAuthProvider.credentialFromError(error);
-      // ...
-    });
-};
-
-const userSingOut = async () => {
-  signOut(auth)
-    .then(() => {
-      alert('Sign-out successful');
-      btnSignOut.style.display = 'none';
-      loginStatusMsg.style.display = 'none';
-    })
-    .catch((error) => {
-      //error happened
-    });
-};
-
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    btnSignOut.style.display = 'inline-block';
-    loginStatusMsg.style.display = 'flex';
-  } else {
-  }
-});
-
-btnSignIn.onclick = userSignIn;
-btnSignOut.onclick = userSingOut;
