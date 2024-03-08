@@ -7,6 +7,25 @@ body {
     'Segoe UI Emoji', 'Segoe UI Symbol';
 }
 
+.dot-bg {
+  --dot-bg: white;
+  --dot-color: #999;
+  --dot-size: 1px;
+  --dot-space: 1rem;
+  background: linear-gradient(
+        90deg,
+        var(--dot-bg) calc(var(--dot-space) - var(--dot-size)),
+        transparent 1%
+      )
+      center / var(--dot-space) var(--dot-space),
+    linear-gradient(
+        var(--dot-bg) calc(var(--dot-space) - var(--dot-size)),
+        transparent 1%
+      )
+      center / var(--dot-space) var(--dot-space),
+    var(--dot-color);
+}
+
 nav {
   display: flex;
   background-color: white;
@@ -30,13 +49,31 @@ nav {
 }
 
 .note-content {
-  outline: 1px solid red;
   padding: 1rem;
   border-radius: 5px;
+  box-shadow: 0px 2px 1px -1px rgba(0, 0, 0, 0.2),
+    0px 1px 1px 0px rgba(0, 0, 0, 0.14), 0px 1px 3px 0px rgba(0, 0, 0, 0.12);
+  transition: all 0.2s ease-in-out;
+}
+
+.note-content:hover {
+  transform: scale(1.03);
+  box-shadow: 0px 3px 3px -2px rgba(0, 0, 0, 0.2),
+    0px 3px 4px 0px rgba(0, 0, 0, 0.14), 0px 1px 8px 0px rgba(0, 0, 0, 0.12);
+}
+
+.note-title {
+  font-weight: 500;
+  line-height: 2rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--primary-text-color);
 }
 
 .note-content small {
-  color: #777;
+  color: #555;
 }
 
 .note-text {
@@ -44,28 +81,29 @@ nav {
   -webkit-line-clamp: 12;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.note-title {
-  font-weight: 500;
-  line-height: 2rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  margin-top: 1rem;
 }
 
 .btn-delete-card {
+  background-color: transparent;
+  color: #000;
   display: flex;
   align-items: center;
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
+  justify-content: center;
+  float: right;
+  margin-right: -0.5rem;
+  margin-top: -0.5rem;
   width: 30px;
   height: 30px;
   border-radius: 15px;
   border: 0;
   cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-delete-card:hover {
+  background-color: #ff6961;
+  color: white;
 }
 
 .grid-sizer,
@@ -99,7 +137,7 @@ nav {
   outline: none;
 }
 
-#dialog-newnote-form {
+#dialog-note-form {
   overflow: visible;
   margin: auto;
   border: 0;
@@ -109,21 +147,31 @@ nav {
   max-height: 100%;
 }
 
-.form-container {
+#form-container {
   border-radius: 5px;
   padding: 1.5rem;
-  background-color: white;
+  background-color: #ffd966;
   box-shadow: 0px 0px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 dialog::backdrop {
   background-color: rgba(0, 0, 0, 0.391);
-  /* backdrop-filter: blur(1px); */
 }
 
-#editor-new-note {
+#input-note-text {
   border-bottom: 0;
   display: flex;
+}
+
+#input-note-title {
+  width: 100%;
+  background-color: transparent;
+  border: 1px solid #fff;
+  border-bottom: 0;
+  padding: 15px 12px;
+  font-size: 26px;
+  line-height: 37px;
+  border-radius: 5px 5px 0 0;
 }
 
 #btn-save-note {
@@ -131,21 +179,16 @@ dialog::backdrop {
   margin: auto;
 }
 
-.new-note-form-separator {
-  border-left: 1px solid #ccc;
-  border-right: 1px solid #ccc;
+.form-separator {
+  border-left: 1px solid #fff;
+  border-right: 1px solid #fff;
+  padding: 0 12px;
 }
 
-.new-note-form-separator > hr {
+.form-separator > hr {
   height: 1px;
-  border: none;
-  color: #ccc;
-  background-color: #ccc;
-}
-
-#dialog-button-options {
-  display: flex;
-  padding-top: 1.5rem;
+  border: 0;
+  background-color: #fff;
 }
 
 .dialog-btn {
@@ -163,4 +206,66 @@ button > ion-icon {
 #loginStatus {
   display: flex;
   align-items: center;
+}
+
+#btn-color-popover {
+  mix-blend-mode: normal;
+  border: 1px solid white;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+}
+
+#btn-color-popover:hover {
+  mix-blend-mode: overlay;
+}
+
+#dialog-button-options {
+  display: flex;
+  align-items: center;
+  padding-top: 1.5rem;
+  position: relative;
+}
+
+#popover-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  background-color: transparent;
+  visibility: hidden;
+}
+
+#popover-overlay.active {
+  visibility: visible;
+}
+
+#popover-dialog {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  position: absolute;
+  bottom: 50px;
+  background-color: white;
+  box-shadow: 0px 3px 3px -2px rgba(0, 0, 0, 0.2),
+    0px 3px 4px 0px rgba(0, 0, 0, 0.14), 0px 1px 8px 0px rgba(0, 0, 0, 0.12);
+  border-radius: 5px;
+  z-index: 11;
+  visibility: hidden;
+  padding: 0.5rem;
+  max-width: 11.5rem;
+}
+
+#popover-dialog.active {
+  visibility: visible;
+}
+
+.btn-color-option {
+  border: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  margin: 0.5rem;
 }

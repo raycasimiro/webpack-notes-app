@@ -1,4 +1,5 @@
 import { format, formatDistance } from 'date-fns';
+import './Notes.css';
 import app from './Firebase';
 import {
   where,
@@ -76,9 +77,7 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-import './Notes.css';
-
-function Note(strTitle, objText, strHTML) {
+function Note(strTitle, objText, strHTML, strColor) {
   const userRef = collection(db, 'users/' + uid + '/notes/');
   let currentDateTime = format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSS");
   addDoc(userRef, {
@@ -88,24 +87,13 @@ function Note(strTitle, objText, strHTML) {
     id: crypto.randomUUID(),
     created_at: currentDateTime,
     modified_at: currentDateTime,
+    color: strColor,
   }).then(() => {
     //confirm added
   });
-
-  let title = strTitle;
-  let text = objText;
-  let html = strHTML.replaceAll('<p></p>', '<br/>');
-  const id = crypto.randomUUID();
-  let created_at = format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSS");
-
-  return { title, text, html, created_at, id };
 }
 
 function Notes() {
-  let notes = [];
-
-  const addNote = (objNote) => notes.unshift(objNote);
-
   const removeNote = async (strID) => {
     const userRef = collection(db, 'users/' + uid + '/notes/');
     const q = query(userRef, where('id', '==', strID));
@@ -116,8 +104,6 @@ function Notes() {
       });
     });
   };
-
-  const getLatestNote = () => notes[0];
 
   const getNewestNote = async () => {
     const userRef = collection(db, 'users/' + uid + '/notes/');
@@ -142,7 +128,7 @@ function Notes() {
     return notes;
   };
 
-  const updateNote = async (strTitle, objText, strHtml, strID) => {
+  const updateNote = async (strTitle, objText, strHtml, strID, strColor) => {
     const userRef = collection(db, 'users/' + uid + '/notes/');
     const q = query(userRef, where('id', '==', strID));
     const querySnapshot = await getDocs(q);
@@ -152,18 +138,17 @@ function Notes() {
         text: { ...objText },
         html: strHtml,
         modified_at: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSS"),
+        color: strColor,
       }).then(() => {
-        //confirm update
+        //saved
       });
     });
   };
 
   return {
-    addNote,
     removeNote,
     updateNote,
     getAllNotes,
-    getLatestNote,
     getNewestNote,
   };
 }

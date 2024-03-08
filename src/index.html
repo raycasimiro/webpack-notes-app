@@ -11,7 +11,7 @@
     />
     <title>Document</title>
   </head>
-  <body>
+  <body class="dot-bg">
     <nav>
       <h2>Notes</h2>
       <button type="button" id="btn-sign-in">Create Account / Sign In</button>
@@ -24,17 +24,19 @@
     <main class="notes-container">
       <div class="grid-sizer"></div>
     </main>
-    <dialog id="dialog-newnote-form">
-      <div class="form-container">
-        <input type="text" id="new-note-title" placeholder="Title" />
-        <div class="new-note-form-separator">
+    <dialog id="dialog-note-form">
+      <div id="form-container">
+        <input type="text" id="input-note-title" placeholder="Title" />
+        <div class="form-separator">
           <hr />
         </div>
         <section class="ql-container">
-          <div id="editor-new-note"></div>
+          <div id="input-note-text"></div>
         </section>
         <div id="dialog-button-options">
-          <!-- <button type="button" id="btn-save-note">Save</button> -->
+          <button type="button" id="btn-color-popover"></button>
+          <div id="popover-overlay"></div>
+          <div id="popover-dialog"></div>
         </div>
       </div>
     </dialog>

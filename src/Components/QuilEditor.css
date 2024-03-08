@@ -66,19 +66,16 @@ blockquote {
 }
 
 .ql-snow .ql-editor blockquote {
-  border-left: 3px solid #ccc;
+  border-left: 3px solid #fff;
   font-style: italic;
   margin-top: 10px;
   margin-bottom: 10px;
   padding-left: 16px;
 }
 
-#new-note-title {
-  width: 100%;
-  border: 1px solid #ccc;
-  border-bottom: 0;
-  padding: 15px 12px;
-  font-size: 26px;
-  line-height: 37px;
-  border-radius: 5px 5px 0 0;
+.ql-container.ql-snow {
+  border: 1px solid #fff;
+}
+.ql-toolbar.ql-snow {
+  border: 1px solid #fff;
 }
