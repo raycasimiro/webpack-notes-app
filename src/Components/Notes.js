@@ -20,7 +20,6 @@ import {
   signOut,
   onAuthStateChanged,
   signInWithRedirect,
-  linkWithPopup,
 } from 'firebase/auth';
 
 //Firebase auth
@@ -77,24 +76,31 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-function Note(strTitle, objText, strHTML, strColor) {
-  const userRef = collection(db, 'users/' + uid + '/notes/');
-  let currentDateTime = format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSS");
-  addDoc(userRef, {
-    title: strTitle,
-    text: { ...objText },
-    html: strHTML,
-    id: crypto.randomUUID(),
-    created_at: currentDateTime,
-    modified_at: currentDateTime,
-    color: strColor,
-  }).then(() => {
-    //confirm added
-  });
-}
-
 function Notes() {
-  const removeNote = async (strID) => {
+  let colorsAvailable = [];
+
+  const getAllAvailableColors = () => colorsAvailable;
+
+  const addNote = async (strTitle, objText, strHTML, strColor) => {
+    colorsAvailable.push(strColor);
+    const userRef = collection(db, 'users/' + uid + '/notes/');
+    let currentDateTime = format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSS");
+    addDoc(userRef, {
+      title: strTitle,
+      text: { ...objText },
+      html: strHTML,
+      id: crypto.randomUUID(),
+      created_at: currentDateTime,
+      modified_at: currentDateTime,
+      color: strColor,
+    }).then(() => {
+      //confirm added
+    });
+  };
+
+  const removeNote = async (strID, strColor) => {
+    let index = colorsAvailable.findIndex((color) => color === strColor);
+    colorsAvailable.splice(index, 1);
     const userRef = collection(db, 'users/' + uid + '/notes/');
     const q = query(userRef, where('id', '==', strID));
     const querySnapshot = await getDocs(q);
@@ -103,29 +109,6 @@ function Notes() {
         // alert('deleted succesfully!');
       });
     });
-  };
-
-  const getNewestNote = async () => {
-    const userRef = collection(db, 'users/' + uid + '/notes/');
-    const q = query(userRef, orderBy('modified_at', 'desc'), limit(1));
-    const querySnapshot = await getDocs(q);
-    let note = {};
-    querySnapshot.forEach((doc) => {
-      note = { ...doc.data() };
-    });
-    return note;
-  };
-
-  const getAllNotes = async () => {
-    const userRef = collection(db, 'users/' + uid + '/notes/');
-    const q = query(userRef, orderBy('modified_at', 'desc'));
-    const querySnapshot = await getDocs(q);
-    let notes = [];
-    querySnapshot.forEach((doc) => {
-      notes.push({ ...doc.data() });
-    });
-    console.log(notes);
-    return notes;
   };
 
   const updateNote = async (strTitle, objText, strHtml, strID, strColor) => {
@@ -145,12 +128,50 @@ function Notes() {
     });
   };
 
+  const filterNotes = async (strAttr, strValue) => {
+    const userRef = collection(db, 'users/' + uid + '/notes/');
+    const q = query(userRef, where(strAttr, '==', strValue));
+    const querySnapshot = await getDocs(q);
+    let notes = [];
+    querySnapshot.forEach((doc) => {
+      notes.push({ ...doc.data() });
+    });
+    return notes;
+  };
+
+  const getNewestNote = async () => {
+    const userRef = collection(db, 'users/' + uid + '/notes/');
+    const q = query(userRef, orderBy('modified_at', 'desc'), limit(1));
+    const querySnapshot = await getDocs(q);
+    let note = {};
+    querySnapshot.forEach((doc) => {
+      note = { ...doc.data() };
+    });
+    return note;
+  };
+
+  const getAllNotes = async () => {
+    const userRef = collection(db, 'users/' + uid + '/notes/');
+    const q = query(userRef, orderBy('modified_at', 'desc'));
+    const querySnapshot = await getDocs(q);
+    let notes = [];
+    colorsAvailable = [];
+    querySnapshot.forEach((doc) => {
+      notes.push({ ...doc.data() });
+      colorsAvailable.push(doc.data().color);
+    });
+    return notes;
+  };
+
   return {
+    addNote,
     removeNote,
     updateNote,
     getAllNotes,
+    filterNotes,
     getNewestNote,
+    getAllAvailableColors,
   };
 }
 
-export { Note, Notes };
+export default Notes;

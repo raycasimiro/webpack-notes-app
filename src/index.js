@@ -1,5 +1,5 @@
 import Masonry from 'masonry-layout';
-import { Note, Notes } from './Components/Notes';
+import Notes from './Components/Notes';
 import QuilEditor from './Components/QuilEditor';
 import { format, formatDistance } from 'date-fns';
 import './reset.css';
@@ -33,17 +33,19 @@ const inputTitle = document.getElementById('input-note-title');
 const btnColorPopOver = document.getElementById('btn-color-popover');
 const popoverOverlay = document.getElementById('popover-overlay');
 const popoverDialog = document.getElementById('popover-dialog');
+const colorsMenu = document.getElementById('colors-menu');
+const actionsMenu = document.getElementById('actions-menu');
 
 const colorSwatch = [
   '#FFD966',
   '#FFC470',
   '#FFAFA3',
-  '#80CAFF',
-  '#D9B8FF',
   '#FFADE7',
-  '#85E0A3',
-  '#AFBCCF',
   '#E6E6E6',
+  '#D9B8FF',
+  '#AFBCCF',
+  '#85E0A3',
+  '#80CAFF',
 ];
 
 const setModalColor = (strColor) => {
@@ -57,11 +59,6 @@ const inputNoteText = QuilEditor('input-note-text');
 //initialize Notes
 const newNotes = Notes();
 
-const resetMasonry = () => {
-  msnry.remove(grid.children);
-  populateMasonryContainer();
-};
-
 //create Card element
 const createCard = (title, text, html, created_at, modified_at, id, color) => {
   const noteCard = document.createElement('div');
@@ -71,7 +68,7 @@ const createCard = (title, text, html, created_at, modified_at, id, color) => {
     dialogNoteForm.showModal();
     let btnSave = document.createElement('button');
     btnSave.innerText = 'Save';
-    btnSave.classList.add('dialog-btn');
+    btnSave.classList.add('btn-primary');
     btnSave.addEventListener('click', async (e) => {
       e.stopPropagation();
       dialogNoteForm.close();
@@ -80,9 +77,10 @@ const createCard = (title, text, html, created_at, modified_at, id, color) => {
         inputNoteText.getEditorContents(),
         inputNoteText.getEditorContentsHTML().replaceAll('<p></p>', '<br/>'),
         id,
-        btnColorPopOver.style.backgroundColor
+        rgbToHex(btnColorPopOver.style.backgroundColor)
       );
-      resetMasonry();
+      msnry.remove(grid.children);
+      populateMasonryContainer(await newNotes.getAllNotes());
     });
     dialogButtonOptions.insertAdjacentElement('beforeend', btnSave);
     inputTitle.value = title;
@@ -92,13 +90,18 @@ const createCard = (title, text, html, created_at, modified_at, id, color) => {
   const btnDeleteCard = document.createElement('button');
   btnDeleteCard.classList.add('btn-delete-card');
   btnDeleteCard.innerHTML = '<ion-icon name="close-outline"></ion-icon>';
-  btnDeleteCard.addEventListener('click', (e) => {
+  btnDeleteCard.addEventListener('click', async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    newNotes.removeNote(id);
+    await newNotes.removeNote(id, color);
     let elem = e.target.parentNode.parentNode;
     msnry.remove(elem);
-    msnry.layout();
+    if (grid.children.length < 3) {
+      actionsMenu.innerHTML = '';
+      populateMasonryContainer(await newNotes.getAllNotes());
+      isFilterMode = false;
+    } else msnry.layout();
+    createColorsFilterMenu();
   });
 
   const noteContent = document.createElement('div');
@@ -142,8 +145,8 @@ const createCard = (title, text, html, created_at, modified_at, id, color) => {
   return noteCard;
 };
 
-const populateMasonryContainer = async () => {
-  let notes = await newNotes.getAllNotes();
+const populateMasonryContainer = async (objNotes) => {
+  let notes = await objNotes;
   for (let note of notes) {
     let elem = createCard(
       note.title,
@@ -158,23 +161,38 @@ const populateMasonryContainer = async () => {
     msnry.appended(elem);
     msnry.layout();
   }
+  createColorsFilterMenu();
 };
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (user) {
-    populateMasonryContainer();
+    populateMasonryContainer(await newNotes.getAllNotes());
     console.log(user);
   } else {
     msnry.remove(grid.children);
   }
 });
 
+function rgbToHex(col) {
+  if (col.charAt(0) == 'r') {
+    col = col.replace('rgb(', '').replace(')', '').split(',');
+    var r = parseInt(col[0], 10).toString(16);
+    var g = parseInt(col[1], 10).toString(16);
+    var b = parseInt(col[2], 10).toString(16);
+    r = r.length == 1 ? '0' + r : r;
+    g = g.length == 1 ? '0' + g : g;
+    b = b.length == 1 ? '0' + b : b;
+    var colHex = '#' + r + g + b;
+    return colHex;
+  }
+}
+
 const saveNewNote = async () => {
-  Note(
+  newNotes.addNote(
     getTitleInput(),
     inputNoteText.getEditorContents(),
     inputNoteText.getEditorContentsHTML(),
-    btnColorPopOver.style.backgroundColor
+    rgbToHex(btnColorPopOver.style.backgroundColor)
   );
 
   let note = await newNotes.getNewestNote();
@@ -189,10 +207,16 @@ const saveNewNote = async () => {
     note.color
   );
 
-  grid.appendChild(newNotesCard);
-  msnry.prepended(newNotesCard);
-  msnry.layout();
-
+  if (!isFilterMode) {
+    createColorsFilterMenu();
+    grid.appendChild(newNotesCard);
+    msnry.prepended(newNotesCard);
+    msnry.layout();
+  } else {
+    isFilterMode = false;
+    msnry.remove(grid.children);
+    populateMasonryContainer(await newNotes.getAllNotes());
+  }
   dialogNoteForm.close();
 };
 
@@ -203,7 +227,7 @@ btnOpenNewNoteModal.addEventListener('click', () => {
   let btnSave = document.createElement('button');
   btnSave.innerText = 'Save';
   btnSave.onclick = saveNewNote;
-  btnSave.classList.add('dialog-btn');
+  btnSave.classList.add('btn-primary');
   dialogButtonOptions.insertAdjacentElement('beforeend', btnSave);
 });
 
@@ -243,19 +267,60 @@ popoverOverlay.addEventListener('click', () => {
   popoverDialog.classList.remove('active');
 });
 
-const createColorButtons = (swatch) => {
-  for (let e of swatch) {
+const createColorButtons = (colors) => {
+  for (let color of colors) {
     let btn = document.createElement('button');
     btn.classList.add('btn-color-option');
-    btn.style.backgroundColor = e;
+    btn.style.backgroundColor = color;
     btn.style.cursor = 'pointer';
     popoverDialog.appendChild(btn);
     btn.onclick = () => {
-      setModalColor(e);
+      setModalColor(color);
       popoverOverlay.classList.remove('active');
       popoverDialog.classList.remove('active');
     };
   }
 };
-
 createColorButtons(colorSwatch);
+
+let isFilterMode = false;
+
+const createColorsFilterMenu = () => {
+  let colors = newNotes.getAllAvailableColors();
+  const uniqueColors = [...new Set(colors)];
+  uniqueColors.sort().reverse();
+  colorsMenu.innerHTML = '';
+  if (uniqueColors.length > 1 && !isFilterMode) {
+    actionsMenu.innerHTML = '';
+    for (let color of uniqueColors) {
+      let btn = document.createElement('button');
+      btn.classList.add('btn-color-menu-option');
+      btn.style.backgroundColor = color;
+      btn.addEventListener('click', () => {
+        isFilterMode = true;
+        msnry.remove(grid.children);
+        populateMasonryContainer(newNotes.filterNotes('color', color));
+      });
+      colorsMenu.appendChild(btn);
+    }
+  }
+  //create 'all' button
+  if (
+    uniqueColors.length > 1 &&
+    isFilterMode &&
+    actionsMenu.children.length === 0
+  ) {
+    console.log(actionsMenu.children.length);
+    let btn = document.createElement('button');
+    btn.id = 'btn-filter-all';
+    btn.classList.add('btn-primary');
+    btn.style.animation = 'fade-in .3s';
+    btn.innerText = 'ALL';
+    btn.addEventListener('click', () => {
+      isFilterMode = false;
+      msnry.remove(grid.children);
+      populateMasonryContainer(newNotes.getAllNotes());
+    });
+    actionsMenu.appendChild(btn);
+  }
+};

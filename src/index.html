@@ -18,15 +18,24 @@
       <button type="button" id="btn-sign-out">Log out</button>
       <div id="login-status-msg">No account signed in</div>
     </nav>
-    <section class="menu-container">
-      <button type="button" id="btn-open-newnote-modal">Add Note</button>
+    <section id="menu-container">
+      <div id="colors-menu"></div>
+      <div id="actions-menu"></div>
+      <button type="button" id="btn-open-newnote-modal" class="btn-primary">
+        Add Note
+      </button>
     </section>
     <main class="notes-container">
       <div class="grid-sizer"></div>
     </main>
     <dialog id="dialog-note-form">
       <div id="form-container">
-        <input type="text" id="input-note-title" placeholder="Title" />
+        <input
+          type="text"
+          id="input-note-title"
+          placeholder="Title"
+          autocomplete="off"
+        />
         <div class="form-separator">
           <hr />
         </div>
