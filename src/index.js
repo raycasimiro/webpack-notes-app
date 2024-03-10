@@ -43,25 +43,25 @@ const signInWithGoogle = () => {
     .catch((error) => {
       const errorCode = error.code;
       const errorMessage = error.message;
-      console.log(errorCode, errorMessage);
+      alert(errorCode, errorMessage);
     });
 };
 
 const signInWithGithub = () => {
-  signInWithRedirect(auth, githubProvider)
-    .then((result) => {
-      const credential = GithubAuthProvider.credentialFromResult(result);
-      const token = credential.accessToken;
-      const user = result.user;
-    })
-    .catch((error) => {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      // The email of the user's account used.
-      const email = error.customData.email;
-      // The AuthCredential type that was used.
-      const credential = GithubAuthProvider.credentialFromError(error);
-    });
+  // signInWithRedirect(auth, githubProvider)
+  //   .then((result) => {
+  //     const credential = GithubAuthProvider.credentialFromResult(result);
+  //     const token = credential.accessToken;
+  //     const user = result.user;
+  //   })
+  //   .catch((error) => {
+  //     const errorCode = error.code;
+  //     const errorMessage = error.message;
+  //     // The email of the user's account used.
+  //     const email = error.customData.email;
+  //     // The AuthCredential type that was used.
+  //     const credential = GithubAuthProvider.credentialFromError(error);
+  //   });
 };
 
 const userSignOut = async () => {
