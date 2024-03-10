@@ -6,7 +6,7 @@ import { initializeApp } from 'firebase/app';
 // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: 'AIzaSyCWCD0fELIxsopuhhfJo1KLymb2krWtHfI',
-  authDomain: 'rcsmr-notes.netlify.app',
+  authDomain: 'rcsmr-notes-app.firebaseapp.com',
   projectId: 'rcsmr-notes-app',
   storageBucket: 'rcsmr-notes-app.appspot.com',
   messagingSenderId: '367911567246',
