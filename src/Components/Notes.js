@@ -1,4 +1,4 @@
-import { format, formatDistance } from 'date-fns';
+import { format } from 'date-fns';
 import './Notes.css';
 import app from './Firebase';
 import {
@@ -14,67 +14,19 @@ import {
   limit,
 } from 'firebase/firestore';
 
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signOut,
-  onAuthStateChanged,
-  signInWithRedirect,
-} from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
-//Firebase auth
 const auth = getAuth();
-const provider = new GoogleAuthProvider();
-
-const btnSignIn = document.getElementById('btn-sign-in');
-const btnSignOut = document.getElementById('btn-sign-out');
-
-const loginStatusMsg = document.getElementById('login-status-msg');
-
-btnSignOut.style.display = 'none';
-loginStatusMsg.style.display = 'none';
-
-const userSignIn = async () => {
-  signInWithRedirect(auth, provider)
-    .then((result) => {
-      const user = result.user;
-    })
-    .catch((error) => {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-    });
-};
-
-const userSingOut = async () => {
-  signOut(auth)
-    .then(() => {
-      alert('Sign-out successful');
-      btnSignOut.style.display = 'none';
-      loginStatusMsg.style.display = 'none';
-    })
-    .catch((error) => {
-      //error happened
-    });
-};
-
-btnSignIn.onclick = userSignIn;
-btnSignOut.onclick = userSingOut;
-
-//init Firestore service
-const db = getFirestore();
-
-//collection reference
-const colRef = collection(db, 'users');
-
 let uid;
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   if (user) {
     uid = user.uid;
-    btnSignOut.style.display = 'inline-block';
-    loginStatusMsg.style.display = 'flex';
   } else {
   }
 });
+
+//init Firestore service
+const db = getFirestore();
 
 function Notes() {
   let colorsAvailable = [];

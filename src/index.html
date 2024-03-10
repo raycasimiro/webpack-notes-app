@@ -9,25 +9,36 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap"
       rel="stylesheet"
     />
-    <title>Document</title>
+    <title>Notes</title>
   </head>
   <body class="dot-bg">
     <nav>
-      <h2>Notes</h2>
-      <button type="button" id="btn-sign-in">Create Account / Sign In</button>
-      <button type="button" id="btn-sign-out">Log out</button>
-      <div id="login-status-msg">No account signed in</div>
+      <div>
+        <h2>Notes</h2>
+        <div class="user-details-container">
+          <button id="btn-user-actions">
+            <div id="user-profile-photo"></div>
+          </button>
+        </div>
+      </div>
     </nav>
     <section id="menu-container">
       <div id="colors-menu"></div>
       <div id="actions-menu"></div>
-      <button type="button" id="btn-open-newnote-modal" class="btn-primary">
-        Add Note
-      </button>
     </section>
     <main class="notes-container">
       <div class="grid-sizer"></div>
     </main>
+    <dialog id="dialog-sign-in">
+      <h3>Sign In</h3>
+      <button type="button" id="btn-google-sign-in" class="btn-sign-in">
+        <ion-icon name="logo-google"></ion-icon>Continue with Google
+      </button>
+      <button type="button" id="btn-github-sign-in" class="btn-sign-in">
+        <ion-icon name="logo-github"></ion-icon>Continue with Github
+      </button>
+    </dialog>
+    <dialog id="dialog-sign-out"></dialog>
     <dialog id="dialog-note-form">
       <div id="form-container">
         <input

@@ -1,12 +1,103 @@
 import Masonry from 'masonry-layout';
 import Notes from './Components/Notes';
 import QuilEditor from './Components/QuilEditor';
-import { format, formatDistance } from 'date-fns';
+import { format, formatDistance, parseISO } from 'date-fns';
 import './reset.css';
 import './index.css';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import {
+  getAuth,
+  GoogleAuthProvider,
+  GithubAuthProvider,
+  signOut,
+  onAuthStateChanged,
+  signInWithRedirect,
+} from 'firebase/auth';
 
+//UI Elements
+const dialogSignIn = document.getElementById('dialog-sign-in');
+const dialogSignOut = document.getElementById('dialog-sign-out');
+const btnSignInGoogle = document.getElementById('btn-google-sign-in');
+const btnSignInGithub = document.getElementById('btn-github-sign-in');
+const dialogButtonOptions = document.getElementById('dialog-button-options');
+const dialogNoteForm = document.getElementById('dialog-note-form');
+const formContainer = document.getElementById('form-container');
+const inputTitle = document.getElementById('input-note-title');
+const btnColorPopOver = document.getElementById('btn-color-popover');
+const popoverOverlay = document.getElementById('popover-overlay');
+const popoverDialog = document.getElementById('popover-dialog');
+const colorsMenu = document.getElementById('colors-menu');
+const actionsMenu = document.getElementById('actions-menu');
+const btnUserActions = document.getElementById('btn-user-actions');
+const userProfilePhoto = document.getElementById('user-profile-photo');
+
+//Firebase auth
 const auth = getAuth();
+const googleProvider = new GoogleAuthProvider();
+const githubProvider = new GithubAuthProvider();
+
+const signInWithGoogle = () => {
+  signInWithRedirect(auth, googleProvider)
+    .then((result) => {
+      const user = result.user;
+    })
+    .catch((error) => {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+    });
+};
+
+const signInWithGithub = () => {
+  signInWithRedirect(auth, githubProvider)
+    .then((result) => {
+      const credential = GithubAuthProvider.credentialFromResult(result);
+      const token = credential.accessToken;
+      const user = result.user;
+    })
+    .catch((error) => {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      // The email of the user's account used.
+      const email = error.customData.email;
+      // The AuthCredential type that was used.
+      const credential = GithubAuthProvider.credentialFromError(error);
+    });
+};
+
+const userSignOut = async () => {
+  dialogSignOut.close();
+  signOut(auth)
+    .then(() => {
+      // btnSignOut.style.display = 'none';
+    })
+    .catch((error) => {
+      //error happened
+    });
+};
+
+dialogSignIn.addEventListener('cancel', (e) => {
+  e.preventDefault();
+});
+
+btnSignInGoogle.onclick = signInWithGoogle;
+btnSignInGithub.onclick = signInWithGithub;
+
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    populateMasonryContainer(await newNotes.getAllNotes());
+    userProfilePhoto.innerHTML = ` <img src="${user.photoURL}" alt="">`;
+    dialogSignIn.close();
+    createSignOutBtn(user);
+    createAddNoteBtn();
+    createAddNoteBtnMobile();
+  } else {
+    document.getElementById('menu-container').innerHTML = '';
+    userProfilePhoto.innerHTML = '';
+    colorsMenu.innerHTML = '';
+    dialogSignIn.showModal();
+    msnry.remove(grid.children);
+  }
+});
+
 //initialise Masonry.js
 const grid = document.querySelector('.notes-container');
 const msnry = new Masonry(grid, {
@@ -24,17 +115,13 @@ const msnry = new Masonry(grid, {
   },
 });
 
-//UI
-const btnOpenNewNoteModal = document.getElementById('btn-open-newnote-modal');
-const dialogButtonOptions = document.getElementById('dialog-button-options');
-const dialogNoteForm = document.getElementById('dialog-note-form');
-const formContainer = document.getElementById('form-container');
-const inputTitle = document.getElementById('input-note-title');
-const btnColorPopOver = document.getElementById('btn-color-popover');
-const popoverOverlay = document.getElementById('popover-overlay');
-const popoverDialog = document.getElementById('popover-dialog');
-const colorsMenu = document.getElementById('colors-menu');
-const actionsMenu = document.getElementById('actions-menu');
+btnUserActions.addEventListener('click', () => {
+  dialogSignOut.showModal();
+});
+
+dialogSignOut.addEventListener('click', (e) => {
+  if (e.target.tagName === 'DIALOG') dialogSignOut.close();
+});
 
 const colorSwatch = [
   '#FFD966',
@@ -48,6 +135,43 @@ const colorSwatch = [
   '#80CAFF',
 ];
 
+const createAddNoteBtn = () => {
+  let btn = document.createElement('button');
+  btn.id = 'btn-open-newnote-modal';
+  btn.classList.add('btn-primary');
+  btn.innerText = 'Add Note';
+  btn.onclick = openNewNoteModal;
+  document.getElementById('menu-container').appendChild(btn);
+};
+
+const createAddNoteBtnMobile = () => {
+  let div = document.createElement('div');
+  div.classList.add('floating-btn-container');
+  let btn = document.createElement('button');
+  btn.id = 'btn-open-newnote-modal-mobile';
+  btn.innerText = '+';
+  btn.onclick = openNewNoteModal;
+  div.appendChild(btn);
+  document.body.appendChild(div);
+};
+
+const createSignOutBtn = (user) => {
+  let btn = document.createElement('button');
+  let userDisplayName = document.createElement('h4');
+  let userEmail = document.createElement('small');
+  btn.id = 'btn-sign-out';
+  btn.innerText = 'Sign out';
+  btn.style.width = '100%';
+  btn.style.marginTop = '1rem';
+  btn.classList.add('btn-primary');
+  btn.onclick = userSignOut;
+  userDisplayName.innerText = user.displayName;
+  userEmail.innerText = user.email;
+  dialogSignOut.appendChild(userDisplayName);
+  dialogSignOut.appendChild(userEmail);
+  dialogSignOut.appendChild(btn);
+};
+
 const setModalColor = (strColor) => {
   formContainer.style.backgroundColor = strColor;
   btnColorPopOver.style.backgroundColor = strColor;
@@ -59,6 +183,12 @@ const inputNoteText = QuilEditor('input-note-text');
 //initialize Notes
 const newNotes = Notes();
 
+//readable date
+const getReadableDate = (strDate) => {
+  let parsedDate = parseISO(strDate);
+  return format(parsedDate, 'PPP');
+};
+
 //create Card element
 const createCard = (title, text, html, created_at, modified_at, id, color) => {
   const noteCard = document.createElement('div');
@@ -68,14 +198,18 @@ const createCard = (title, text, html, created_at, modified_at, id, color) => {
     dialogNoteForm.showModal();
     let btnSave = document.createElement('button');
     btnSave.innerText = 'Save';
+    btnSave.style.marginLeft = 'auto';
     btnSave.classList.add('btn-primary');
     btnSave.addEventListener('click', async (e) => {
       e.stopPropagation();
       dialogNoteForm.close();
+      let getHtml = inputNoteText.getEditorContentsHTML();
+      if (getHtml !== '<p></p>')
+        inputNoteText.getEditorContentsHTML().replaceAll('<p></p>', '<br/>');
       await newNotes.updateNote(
         getTitleInput(),
         inputNoteText.getEditorContents(),
-        inputNoteText.getEditorContentsHTML().replaceAll('<p></p>', '<br/>'),
+        getHtml,
         id,
         rgbToHex(btnColorPopOver.style.backgroundColor)
       );
@@ -112,6 +246,10 @@ const createCard = (title, text, html, created_at, modified_at, id, color) => {
   noteTitle.classList.add('note-title');
   noteTitle.innerText = title;
 
+  const noteReadableDate = document.createElement('p');
+  noteReadableDate.innerText = getReadableDate(created_at);
+  noteReadableDate.classList.add('note-readable-date');
+
   let result = '';
   if (created_at === modified_at) {
     result = formatDistance(
@@ -138,6 +276,7 @@ const createCard = (title, text, html, created_at, modified_at, id, color) => {
 
   noteContent.appendChild(btnDeleteCard);
   noteContent.appendChild(noteTitle);
+  noteContent.appendChild(noteReadableDate);
   noteContent.appendChild(noteDate);
   noteContent.appendChild(noteText);
   noteCard.appendChild(noteContent);
@@ -145,8 +284,66 @@ const createCard = (title, text, html, created_at, modified_at, id, color) => {
   return noteCard;
 };
 
+let isFilterMode = false;
+let prevUniqueColorsSize = [];
+const createColorsFilterMenu = () => {
+  let colors = newNotes.getAllAvailableColors();
+  const uniqueColors = [...new Set(colors)];
+  prevUniqueColorsSize.push(uniqueColors.length);
+  console.log(prevUniqueColorsSize);
+  uniqueColors.sort().reverse();
+  colorsMenu.innerHTML = '';
+  if (uniqueColors.length > 1 && !isFilterMode) {
+    actionsMenu.innerHTML = '';
+    let delay = 0;
+    for (let color of uniqueColors) {
+      let btn = document.createElement('button');
+      btn.classList.add('btn-color-menu-option');
+      btn.style.backgroundColor = color;
+      if (
+        uniqueColors.length !==
+        prevUniqueColorsSize[prevUniqueColorsSize.length - 2]
+      ) {
+        btn.style.animationTimingFunction = 'ease-out';
+        btn.style.animation = 'fade-in-from-bottom .5s';
+        btn.style.animationDelay = `${delay}s`;
+        btn.style.animationFillMode = 'forwards';
+        delay += 0.05;
+      } else btn.style.opacity = 1;
+      btn.addEventListener('click', () => {
+        isFilterMode = true;
+        msnry.remove(grid.children);
+        populateMasonryContainer(newNotes.filterNotes('color', color));
+      });
+      colorsMenu.appendChild(btn);
+    }
+  }
+  //create back button
+  if (
+    uniqueColors.length > 1 &&
+    isFilterMode &&
+    actionsMenu.children.length === 0
+  ) {
+    prevUniqueColorsSize.length = 0;
+    let btn = document.createElement('button');
+    btn.id = 'btn-filter-all';
+    btn.classList.add('btn-action-menu-option');
+    btn.style.animationTimingFunction = 'ease-out';
+    btn.style.animation = 'fade-in-from-bottom .5s';
+    btn.innerHTML =
+      '<ion-icon name="return-down-back-outline" size="large"></ion-icon>';
+    btn.addEventListener('click', () => {
+      isFilterMode = false;
+      msnry.remove(grid.children);
+      populateMasonryContainer(newNotes.getAllNotes());
+    });
+    actionsMenu.appendChild(btn);
+  }
+};
+
 const populateMasonryContainer = async (objNotes) => {
   let notes = await objNotes;
+  createColorsFilterMenu();
   for (let note of notes) {
     let elem = createCard(
       note.title,
@@ -161,17 +358,7 @@ const populateMasonryContainer = async (objNotes) => {
     msnry.appended(elem);
     msnry.layout();
   }
-  createColorsFilterMenu();
 };
-
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    populateMasonryContainer(await newNotes.getAllNotes());
-    console.log(user);
-  } else {
-    msnry.remove(grid.children);
-  }
-});
 
 function rgbToHex(col) {
   if (col.charAt(0) == 'r') {
@@ -188,7 +375,7 @@ function rgbToHex(col) {
 }
 
 const saveNewNote = async () => {
-  newNotes.addNote(
+  await newNotes.addNote(
     getTitleInput(),
     inputNoteText.getEditorContents(),
     inputNoteText.getEditorContentsHTML(),
@@ -220,16 +407,17 @@ const saveNewNote = async () => {
   dialogNoteForm.close();
 };
 
-btnOpenNewNoteModal.addEventListener('click', () => {
+const openNewNoteModal = () => {
   setModalColor(colorSwatch[0]);
   dialogNoteForm.showModal();
   inputNoteText.getFocus();
   let btnSave = document.createElement('button');
   btnSave.innerText = 'Save';
+  btnSave.style.marginLeft = 'auto';
   btnSave.onclick = saveNewNote;
   btnSave.classList.add('btn-primary');
   dialogButtonOptions.insertAdjacentElement('beforeend', btnSave);
-});
+};
 
 dialogNoteForm.addEventListener('close', (e) => {
   inputNoteText.clearEditor();
@@ -268,6 +456,8 @@ popoverOverlay.addEventListener('click', () => {
 });
 
 const createColorButtons = (colors) => {
+  btnColorPopOver.innerHTML =
+    '<ion-icon name="color-palette-outline" size="large"></ion-icon>';
   for (let color of colors) {
     let btn = document.createElement('button');
     btn.classList.add('btn-color-option');
@@ -282,45 +472,3 @@ const createColorButtons = (colors) => {
   }
 };
 createColorButtons(colorSwatch);
-
-let isFilterMode = false;
-
-const createColorsFilterMenu = () => {
-  let colors = newNotes.getAllAvailableColors();
-  const uniqueColors = [...new Set(colors)];
-  uniqueColors.sort().reverse();
-  colorsMenu.innerHTML = '';
-  if (uniqueColors.length > 1 && !isFilterMode) {
-    actionsMenu.innerHTML = '';
-    for (let color of uniqueColors) {
-      let btn = document.createElement('button');
-      btn.classList.add('btn-color-menu-option');
-      btn.style.backgroundColor = color;
-      btn.addEventListener('click', () => {
-        isFilterMode = true;
-        msnry.remove(grid.children);
-        populateMasonryContainer(newNotes.filterNotes('color', color));
-      });
-      colorsMenu.appendChild(btn);
-    }
-  }
-  //create 'all' button
-  if (
-    uniqueColors.length > 1 &&
-    isFilterMode &&
-    actionsMenu.children.length === 0
-  ) {
-    console.log(actionsMenu.children.length);
-    let btn = document.createElement('button');
-    btn.id = 'btn-filter-all';
-    btn.classList.add('btn-primary');
-    btn.style.animation = 'fade-in .3s';
-    btn.innerText = 'ALL';
-    btn.addEventListener('click', () => {
-      isFilterMode = false;
-      msnry.remove(grid.children);
-      populateMasonryContainer(newNotes.getAllNotes());
-    });
-    actionsMenu.appendChild(btn);
-  }
-};
