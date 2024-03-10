@@ -291,7 +291,6 @@ const createColorsFilterMenu = () => {
   let colors = newNotes.getAllAvailableColors();
   const uniqueColors = [...new Set(colors)];
   prevUniqueColorsSize.push(uniqueColors.length);
-  console.log(prevUniqueColorsSize);
   uniqueColors.sort().reverse();
   colorsMenu.innerHTML = '';
   if (uniqueColors.length > 1 && !isFilterMode) {
