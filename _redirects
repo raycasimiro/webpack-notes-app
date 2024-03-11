@@ -1,4 +1,0 @@
-# reverse proxy for signin-helpers for popup/redirect sign in.
-location /__/auth {
-  proxy_pass rcsmr-notes-app.firebaseapp.com;
-}
