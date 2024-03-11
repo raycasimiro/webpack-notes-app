@@ -11,6 +11,7 @@ import {
   signOut,
   onAuthStateChanged,
   signInWithRedirect,
+  signInWithPopup,
 } from 'firebase/auth';
 
 //UI Elements
@@ -33,10 +34,12 @@ const userProfilePhoto = document.getElementById('user-profile-photo');
 //Firebase auth
 const auth = getAuth();
 const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+
 const githubProvider = new GithubAuthProvider();
 
-const signInWithGoogle = () => {
-  signInWithRedirect(auth, googleProvider)
+const signInWithGoogle = async () => {
+  await signInWithPopup(auth, googleProvider)
     .then((result) => {
       const user = result.user;
     })
@@ -85,6 +88,7 @@ btnSignInGithub.onclick = signInWithGithub;
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     populateMasonryContainer(await newNotes.getAllNotes());
+    document.getElementById('menu-container').appendChild(colorsMenu);
     userProfilePhoto.innerHTML = ` <img src="${user.photoURL}" alt="">`;
     dialogSignIn.close();
     createSignOutBtn(user);
@@ -94,6 +98,7 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('menu-container').innerHTML = '';
     userProfilePhoto.innerHTML = '';
     colorsMenu.innerHTML = '';
+    dialogSignOut.innerHTML = '';
     dialogSignIn.showModal();
     msnry.remove(grid.children);
   }
@@ -342,8 +347,8 @@ const createColorsFilterMenu = () => {
 };
 
 const populateMasonryContainer = async (objNotes) => {
-  let notes = await objNotes;
   createColorsFilterMenu();
+  let notes = await objNotes;
   for (let note of notes) {
     let elem = createCard(
       note.title,

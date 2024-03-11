@@ -517,3 +517,15 @@ button > ion-icon {
   position: absolute;
   left: 1rem;
 }
+
+.btn-disabled {
+  background-color: white;
+  color: #cccccc;
+  border: 1px solid #cccccc;
+}
+
+.btn-disabled:hover {
+  background-color: white;
+  color: #cccccc;
+  border: 1px solid #cccccc;
+}
