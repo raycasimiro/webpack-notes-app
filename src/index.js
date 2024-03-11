@@ -10,13 +10,12 @@ import {
   GithubAuthProvider,
   signOut,
   onAuthStateChanged,
-  signInWithRedirect,
   signInWithPopup,
 } from 'firebase/auth';
 
 //UI Elements
 const dialogSignIn = document.getElementById('dialog-sign-in');
-const dialogSignOut = document.getElementById('dialog-sign-out');
+const dialogUserMenu = document.getElementById('dialog-user-menu');
 const btnSignInGoogle = document.getElementById('btn-google-sign-in');
 const btnSignInGithub = document.getElementById('btn-github-sign-in');
 const dialogButtonOptions = document.getElementById('dialog-button-options');
@@ -33,10 +32,25 @@ const userProfilePhoto = document.getElementById('user-profile-photo');
 
 //Firebase auth
 const auth = getAuth();
+
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 const githubProvider = new GithubAuthProvider();
+
+const User = (objUser) => {
+  let displayName = objUser.displayName;
+  let id = objUser.uid;
+  let isFilterMode = 'false';
+
+  const toggleFilterMode = () => {
+    isFilterMode = !isFilterMode;
+  };
+
+  return { displayName, isFilterMode, toggleFilterMode };
+};
+
+let CURRENT_USER;
 
 const signInWithGoogle = async () => {
   await signInWithPopup(auth, googleProvider)
@@ -46,29 +60,16 @@ const signInWithGoogle = async () => {
     .catch((error) => {
       const errorCode = error.code;
       const errorMessage = error.message;
-      alert(errorCode, errorMessage);
+      console.log(errorCode, errorMessage);
     });
 };
 
 const signInWithGithub = () => {
-  // signInWithRedirect(auth, githubProvider)
-  //   .then((result) => {
-  //     const credential = GithubAuthProvider.credentialFromResult(result);
-  //     const token = credential.accessToken;
-  //     const user = result.user;
-  //   })
-  //   .catch((error) => {
-  //     const errorCode = error.code;
-  //     const errorMessage = error.message;
-  //     // The email of the user's account used.
-  //     const email = error.customData.email;
-  //     // The AuthCredential type that was used.
-  //     const credential = GithubAuthProvider.credentialFromError(error);
-  //   });
+  //in progress
 };
 
 const userSignOut = async () => {
-  dialogSignOut.close();
+  dialogUserMenu.close();
   signOut(auth)
     .then(() => {
       // btnSignOut.style.display = 'none';
@@ -87,18 +88,24 @@ btnSignInGithub.onclick = signInWithGithub;
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
+    CURRENT_USER = User(user);
+    CURRENT_USER.isFilterMode = false;
     populateMasonryContainer(await newNotes.getAllNotes());
-    document.getElementById('menu-container').appendChild(colorsMenu);
     userProfilePhoto.innerHTML = ` <img src="${user.photoURL}" alt="">`;
     dialogSignIn.close();
-    createSignOutBtn(user);
+    createUserMenu(user);
     createAddNoteBtn();
     createAddNoteBtnMobile();
   } else {
-    document.getElementById('menu-container').innerHTML = '';
+    CURRENT_USER = null;
+    // CURRENT_USER.isFilterMode = false;
+    document
+      .getElementById('menu-container')
+      .removeChild(document.getElementById('menu-container').lastChild);
     userProfilePhoto.innerHTML = '';
     colorsMenu.innerHTML = '';
-    dialogSignOut.innerHTML = '';
+    actionsMenu.innerHTML = '';
+    dialogUserMenu.innerHTML = '';
     dialogSignIn.showModal();
     msnry.remove(grid.children);
   }
@@ -122,11 +129,11 @@ const msnry = new Masonry(grid, {
 });
 
 btnUserActions.addEventListener('click', () => {
-  dialogSignOut.showModal();
+  dialogUserMenu.showModal();
 });
 
-dialogSignOut.addEventListener('click', (e) => {
-  if (e.target.tagName === 'DIALOG') dialogSignOut.close();
+dialogUserMenu.addEventListener('click', (e) => {
+  if (e.target.tagName === 'DIALOG') dialogUserMenu.close();
 });
 
 const colorSwatch = [
@@ -161,7 +168,7 @@ const createAddNoteBtnMobile = () => {
   document.body.appendChild(div);
 };
 
-const createSignOutBtn = (user) => {
+const createUserMenu = (user) => {
   let btn = document.createElement('button');
   let userDisplayName = document.createElement('h4');
   let userEmail = document.createElement('small');
@@ -173,9 +180,9 @@ const createSignOutBtn = (user) => {
   btn.onclick = userSignOut;
   userDisplayName.innerText = user.displayName;
   userEmail.innerText = user.email;
-  dialogSignOut.appendChild(userDisplayName);
-  dialogSignOut.appendChild(userEmail);
-  dialogSignOut.appendChild(btn);
+  dialogUserMenu.appendChild(userDisplayName);
+  dialogUserMenu.appendChild(userEmail);
+  dialogUserMenu.appendChild(btn);
 };
 
 const setModalColor = (strColor) => {
@@ -229,7 +236,8 @@ const createCard = (title, text, html, created_at, modified_at, id, color) => {
 
   const btnDeleteCard = document.createElement('button');
   btnDeleteCard.classList.add('btn-delete-card');
-  btnDeleteCard.innerHTML = '<ion-icon name="close-outline"></ion-icon>';
+  btnDeleteCard.innerHTML =
+    '<ion-icon name="close-outline" size="large"></ion-icon>';
   btnDeleteCard.addEventListener('click', async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -239,7 +247,7 @@ const createCard = (title, text, html, created_at, modified_at, id, color) => {
     if (grid.children.length < 3) {
       actionsMenu.innerHTML = '';
       populateMasonryContainer(await newNotes.getAllNotes());
-      isFilterMode = false;
+      CURRENT_USER.isFilterMode = false;
     } else msnry.layout();
     createColorsFilterMenu();
   });
@@ -290,7 +298,6 @@ const createCard = (title, text, html, created_at, modified_at, id, color) => {
   return noteCard;
 };
 
-let isFilterMode = false;
 let prevUniqueColorsSize = [];
 const createColorsFilterMenu = () => {
   let colors = newNotes.getAllAvailableColors();
@@ -298,7 +305,8 @@ const createColorsFilterMenu = () => {
   prevUniqueColorsSize.push(uniqueColors.length);
   uniqueColors.sort().reverse();
   colorsMenu.innerHTML = '';
-  if (uniqueColors.length > 1 && !isFilterMode) {
+
+  if (uniqueColors.length > 1 && !CURRENT_USER.isFilterMode) {
     actionsMenu.innerHTML = '';
     let delay = 0;
     for (let color of uniqueColors) {
@@ -316,7 +324,7 @@ const createColorsFilterMenu = () => {
         delay += 0.05;
       } else btn.style.opacity = 1;
       btn.addEventListener('click', () => {
-        isFilterMode = true;
+        CURRENT_USER.isFilterMode = true;
         msnry.remove(grid.children);
         populateMasonryContainer(newNotes.filterNotes('color', color));
       });
@@ -326,9 +334,10 @@ const createColorsFilterMenu = () => {
   //create back button
   if (
     uniqueColors.length > 1 &&
-    isFilterMode &&
+    CURRENT_USER.isFilterMode &&
     actionsMenu.children.length === 0
   ) {
+    console.log('load action');
     prevUniqueColorsSize.length = 0;
     let btn = document.createElement('button');
     btn.id = 'btn-filter-all';
@@ -338,7 +347,7 @@ const createColorsFilterMenu = () => {
     btn.innerHTML =
       '<ion-icon name="return-down-back-outline" size="large"></ion-icon>';
     btn.addEventListener('click', () => {
-      isFilterMode = false;
+      CURRENT_USER.isFilterMode = false;
       msnry.remove(grid.children);
       populateMasonryContainer(newNotes.getAllNotes());
     });
@@ -399,13 +408,13 @@ const saveNewNote = async () => {
     note.color
   );
 
-  if (!isFilterMode) {
+  if (!CURRENT_USER.isFilterMode) {
     createColorsFilterMenu();
     grid.appendChild(newNotesCard);
     msnry.prepended(newNotesCard);
     msnry.layout();
   } else {
-    isFilterMode = false;
+    CURRENT_USER.isFilterMode = false;
     msnry.remove(grid.children);
     populateMasonryContainer(await newNotes.getAllNotes());
   }
@@ -461,8 +470,6 @@ popoverOverlay.addEventListener('click', () => {
 });
 
 const createColorButtons = (colors) => {
-  btnColorPopOver.innerHTML =
-    '<ion-icon name="color-palette-outline" size="large"></ion-icon>';
   for (let color of colors) {
     let btn = document.createElement('button');
     btn.classList.add('btn-color-option');
